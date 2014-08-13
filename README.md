@@ -3,6 +3,4 @@
 
 Library to communicate with a LED sign like a eurolite ESN 7x80. 
 
-## Codes to use
-
- * {sN}, Presentation speed, range from 1 (Slowest) to 7 (Fastest)
+This library is based on the library http://www.mediakum.com/phpledsign/ and improved it for modern releases of PHP with namespaces and composer.

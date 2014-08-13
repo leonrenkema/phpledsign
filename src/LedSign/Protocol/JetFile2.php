@@ -16,11 +16,13 @@ namespace LedSign\Protocol;
 
 class JetFile2 {
 
-    const SOH = 0x01;
+    const SOH = "\x01";
     const REV = 'Z';
     const ADDR = '00';
-    const STX = 0x02;
-
+    const STX = "\x02";
+    const EOT_ECHO = "\x03";
+    const EOT_IN_ECHO = "\x04";
+    
     /**
      * Sets the text displayed on the Led Sign to
      * $text. Accepts lot of special markup for changing
@@ -62,42 +64,48 @@ class JetFile2 {
     public function parseText($text) {
 
         $replaceArray = array(
-            '{blink}' => chr(0x07) . '1',
-            '{/blink}' => chr(0x07) . '0',
+            '{blink}' => "\x071",
+            '{/blink}' => "\x070",
             '{%m/%d/%C}' => chr(0x0b) . chr(0x20),
             '{%d/%m/%C}' => chr(0x0b) . chr(0x21),
             '{%m-%d-%C}' => chr(0x0b) . chr(0x22),
             '{%d-%m-%C}' => chr(0x0b) . chr(0x23),
             '{%m.%d.%C}' => chr(0x0b) . chr(0x24),
-            '{%C}' => chr(0x0b) . chr(0x25),
-            '{%Y}' => chr(0x0b) . chr(0x26),
-            '{%m}' => chr(0x0b) . chr(0x27), // month as number
-            '{%b}' => chr(0x0b) . chr(0x28), // abbreviated month name
-            '{%d}' => chr(0x0b) . chr(0x29), // day 01-31
-            '{%u}' => chr(0x0b) . chr(0x2a), // weekday as decimal
-            '{%a}' => chr(0x0b) . chr(0x2b), // abbreviated weekday 
-            '{%H}' => chr(0x0b) . chr(0x2C),
-            '{%M}' => chr(0x0b) . chr(0x2D),
-            '{%S}' => chr(0x0b) . chr(0x2E),
-            '{%R}' => chr(0x0b) . chr(0x2F), // time on 24 hour notation
-            '{%r}' => chr(0x0b) . chr(0x30), // time in am/pm notation
-            '{celsius}' => chr(0x0b) . chr(0x31), // temperature in celsius scale
-            '{humidity}' => chr(0x0b) . chr(0x32), // humidity
-            '{fahrenheit}' => chr(0x0b) . chr(0x33), // temperature in fahrenheit scale
+            '{%C}' => "\x0b\x25",       //chr(0x0b) . chr(0x25), // 
+            '{%Y}' => "\x0b\x26", 
+            '{%m}' => "\x0b\x27",  // month as number
+            '{%b}' => "\x0b\x28",  // abbreviated month name
+            '{%d}' => "\x0b\x29",  // day 01-31
+            '{%u}' => "\x0b\x2a",  // weekday as decimal
+            '{%a}' => "\x0b\x2b",  // abbreviated weekday 
+            '{%H}' => "\x0b\x2c",
+            '{%M}' => "\x0b\x2d", 
+            '{%S}' => "\x0b\x2e", 
+            '{%R}' => "\x0b\x2f",  // time on 24 hour notation
+            '{%r}' => "\x0b\x30",  // time in am/pm notation
+            '{celsius}' => "\x0b\x31", // temperature in celsius scale
+            '{humidity}' => "\x0b\x32",  // humidity
+            '{fahrenheit}' => "\x0b\x33",  // temperature in fahrenheit scale
             '{nf}' => chr(0x0c), // new frame
             '{nl}' => chr(0x0c), // new line
             '{left}' => chr(0x1e) . '1', // align left
             '{center}' => chr(0x1e) . '0', // center align
             '{right}' => chr(0x1e) . '2', // align right
             '{halfspace}' => chr(0x82), // half space
-            '{red}' => chr(0x1c) . '1', // red
-            '{green}' => chr(0x1c) . '2', // green
-            '{amber}' => chr(0x1c) . '3', // amber/orange
-            '{bgblack}' => chr(0x1d) . '0',
+            
+            '{red}' => "\x1c1", //chr(0x1c) . '1', // red
+            '{green}' => "\x1c2", //chr(0x1c) . '2', // green
+            '{amber}' => "\x1c3", //chr(0x1c) . '3', // amber/orange
             '{mixed1}' => chr(0x1c) . '4', // amber-green-red pysty
             '{mixed2}' => chr(0x1c) . '5', // yellow-green-red
             '{mixed3}' => chr(0x1c) . '6', // 
-            '{mixed4}' => chr(0x1c) . '7' // 
+            '{mixed4}' => chr(0x1c) . '7', // 
+            
+            '{bgblack}' => chr(0x1d) . '0',
+            '{bgred}' => chr(0x1d) . '1',
+            '{bggreen}' => chr(0x1d) . '2',
+            '{bgamber}' => chr(0x1d) . '3'
+            
         );
 
         foreach ($replaceArray as $search => $replace) {
@@ -147,68 +155,38 @@ class JetFile2 {
         return $text;
     }
 
-    /*
+    /**
      * Returns the command for setting the text displayed
      * on the sign to $text
+     * 
+     * @param String Text to display on the screen
+     * 
+     * @return String Command string
      */
-
     function getTextCommand($text, $simpleMoveLeft = false) {
 
-        $commandsPrefix = chr(0x01) . "Z00" . chr(0x02) . "A";
-        //$savePath = "A"; 
-        $savePath = chr(0x0f) . "ETAB";
-        $displayProtocol = chr(0x06);
-
-        $displayMode = self::getDisplayModeBytes($simpleMoveLeft);
-        $colorSetting = self::getColorBytes('amber');
-
-        $fontSize = chr(0x1a) . "1"; // 7x6, default
-        $end = chr(0x04);
-
+        $cmd = self::SOH . self::REV . self::ADDR . self::STX . "A";
+        //$savePath = "A";
+        $cmd .= chr(0x0f) . "ETAB";
+        $cmd .= chr(0x06);
+        $cmd .= self::getDisplayModeBytes($simpleMoveLeft);
+        //$colorSetting = self::getColorBytes('amber');
+        $cmd .= chr(0x1a) . "1"; // 7x6, default
         $text = "{jumpOutOut}{jumpOutIn}" . $text;
-        $text = self::parseText($text);
-
-        $cmd = $commandsPrefix
-                . $savePath
-                . $displayProtocol
-                . $typeSetting
-                . $displayMode
-                . $fontSize
-                . $text
-                . $end;
+        $cmd .= self::parseText($text);
+        $cmd .= self::EOT_IN_ECHO;
 
         return $cmd;
     }
-
-    function sendCommand($cmd) {
-
-        $fp = fsockopen("tcp://{$this->ip}", $this->port, $errno, $errstr);
-        stream_set_timeout($fp, 5);
-
-        echo $cmd;
-        if (!$fp) {
-            echo "ERROR: $errno - $errstr<br />\n";
-        } else {
-            fwrite($fp, $cmd);
-
-            fclose($fp);
-        }
-        //echo "Response " . $response;
-        //return $response == "OK";
-        return;
-    }
-
-    function getColorBytes($color) {
-        $colorNumbers['red'] = 1;
-        $colorNumbers['green'] = 2;
-        $colorNumbers['amber'] = 3; // orange
-
-        $colorNumbers['mixed1'] = 4; // amber-green-red pystysuunnassa
-        $colorNumbers['mixed2'] = 5; // yellow-green-red by merkki merkiltä
-        $colorNumbers['mixed3'] = 6; // random parts
-        $colorNumbers['mixed4'] = 7; // 
-
-        return chr(0x1c) . $colorNumbers[$color];
+    
+    function getSetTimeCommand() { 
+        
+        $cmd = chr(0x01) . "Z00" . chr(0x02);
+        
+        $cmd .= "EB";
+        $cmd .= chr(date('y')) . chr(0x00) . chr(date('n')) . chr(date('j')) . chr(date('G')) . chr(date('i')). chr(date('N')) . chr(0x01);
+        $cmd .= self::EOT_IN_ECHO;
+        return $cmd;
     }
 
     function getDisplayModes() {

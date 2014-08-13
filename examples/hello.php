@@ -6,19 +6,11 @@ use LedSign\Transport\Tcp;
 use LedSign\Protocol\JetFile2;
 
 $jetfile = new JetFile2();
-$t = new Tcp();
+$t = new Tcp('192.168.178.22');
 
 
-$cmd = $jetfile->getTextCommand('{p5}{s3}{bgblack}{amber}{%d-%m-%C}{nf}{%H}:{%M}:{%S}');
+$cmd = $jetfile->getTextCommand('{center}{p5}{s3}{bgblack}{amber}{%d-%m-%C}{nf}{%H}:{%M}:{%S}{nf}{red}test');
+date_default_timezone_set('CET');
 $t->sendCommand($cmd);
+
 echo $cmd;
-//
-////use LedSign\LedSign;
-//
-//$ledSign = new LedSign('192.168.178.22');
-////$ledSign->initialize();
-////$ledSign->setText('{p0}{s6}{bgblack}{green}{moveLeftIn}{moveLeftOut}Lorem ipsum dolor sit amet, consectetur adipiscing elit.');
-//
-//$msg = '{p0}{s3}{bgblack}{green}{%R}{nf}{%m.%d.%C}{moveLeftIn}{moveLeftOut}{nf}{amber}DOW {red}-5 {amber}AEX {green}+5';
-//
-//$ledSign->setText($msg);
